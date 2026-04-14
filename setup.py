@@ -37,12 +37,29 @@ import shutil
 import subprocess
 import sys
 
-from distutils.command.build import build
-from distutils.command.clean import clean
-from distutils.command.install import install
-from distutils.core import setup
-from distutils.extension import Extension
-from distutils import sysconfig
+try:
+    from setuptools.command.build import build
+    from setuptools.command.clean import clean
+    from setuptools.command.install import install
+    from setuptools import setup
+    from setuptools import Extension
+    from setuptools._distutils import sysconfig
+    from setuptools._distutils.spawn import find_executable as _find_executable
+except ImportError:
+    from distutils.command.build import build
+    from distutils.command.clean import clean
+    from distutils.command.install import install
+    from distutils.core import setup
+    from distutils.extension import Extension
+    from distutils.spawn import find_executable as _find_executable
+    from distutils import sysconfig
+
+
+def find_program(cmd):
+    which = getattr(shutil, "which", None)
+    if which:
+        return which(cmd)
+    return _find_executable(cmd)
 
 # if we are on a Gentoo box salute the chap and output stuff in nice colors
 # Gentoo is Python friendly, so be especially friendly to them! ;)
@@ -534,13 +551,13 @@ class pivy_build(build):
                     LDFLAGS_LIBS += quote(os.path.join(os.getenv("COINDIR"), "lib", "sowin1.lib"))
                 elif module == "soqt":
                     CPP_FLAGS += " -I" + '"' + os.getenv("QTDIR") + "\\include\"  /DSOQT_DLL"
-                    if os.path.isdir(os.getenv("QTDIR") + "\\include\Qt\""):
-                        CPP_FLAGS += " -I" + '"' + os.getenv("QTDIR") + "\\include\Qt\""
+                    if os.path.isdir(os.getenv("QTDIR") + "\\include\\Qt\""):
+                        CPP_FLAGS += " -I" + '"' + os.getenv("QTDIR") + "\\include\\Qt\""
                         LDFLAGS_LIBS += os.path.join(os.getenv("COINDIR"), "lib", "soqt1.lib") + " "
                     else:
                         # workaround for conda qt4:
-                        CPP_FLAGS += " -I" + '"' + os.getenv("QTDIR") + "\\include\qt\Qt\""
-                        CPP_FLAGS += " -I" + '"' + os.getenv("QTDIR") + "\\include\qt\""
+                        CPP_FLAGS += " -I" + '"' + os.getenv("QTDIR") + "\\include\\qt\\Qt\""
+                        CPP_FLAGS += " -I" + '"' + os.getenv("QTDIR") + "\\include\\qt\""
                         LDFLAGS_LIBS += os.path.join(os.getenv("COINDIR"), "lib", "SoQt.lib") + " "
             else:
                 INCLUDE_DIR = self.cmake_config_dict[config_cmd + '_INCLUDE_DIR']
@@ -599,6 +616,48 @@ class pivy_build(build):
                                                   self.CXX_INCS + CPP_FLAGS).split(),
                                               extra_link_args=(self.CXX_LIBS + LDFLAGS_LIBS).split()))
 
+    def pyi_stub_modules(self):
+        modules = []
+        if 'coin' in self.MODULES:
+            modules.append('pivy.coin')
+        if 'soqt' in self.MODULES:
+            modules.append('pivy.gui.soqt')
+        return modules
+
+    def generate_pyi_stubs(self):
+        "generate .pyi stubs in the distutils build output"
+        stubgen = find_program("stubgen")
+        if not stubgen:
+            print(yellow("stubgen is not available; Pivy .pyi stubs will not be generated"))
+            return
+
+        modules = self.pyi_stub_modules()
+        if not modules:
+            print(yellow("no Pivy modules are available for .pyi stub generation"))
+            return
+
+        generator = os.path.join(os.path.abspath(__dir_name__),
+                                 "tools", "generate_pivy_stubs.py")
+        if not os.path.exists(generator):
+            print(yellow("Pivy .pyi stub generator was not found: %s" % generator))
+            return
+
+        output_dir = os.path.abspath(self.build_lib)
+        stamp = os.path.join(output_dir, "pivy", ".pyi-stamp")
+        command = [
+            sys.executable,
+            generator,
+            "--stubgen", stubgen,
+            "--output", output_dir,
+            "--stamp", stamp,
+        ]
+        for module in modules:
+            command.extend(["--module", module])
+
+        print(blue("Generating Pivy .pyi stubs..."))
+        if subprocess.call(command) != 0:
+            print(yellow("Pivy .pyi stub generation failed; continuing without stubs"))
+
     def run(self):
         "the entry point for the distutils build class"
         # if sys.platform == "win32" and not os.getenv("COINDIR"):
@@ -610,6 +669,8 @@ class pivy_build(build):
 
         for cmd_name in self.get_sub_commands():
             self.run_command(cmd_name)
+
+        self.generate_pyi_stubs()
 
 
 class pivy_clean(clean):
@@ -681,6 +742,8 @@ setup(name="Pivy",
       ext_modules=pivy_build.ext_modules,
       py_modules=pivy_build.py_modules,
       packages=['pivy', 'pivy.gui'],
+      package_data={'pivy': ['*.pyi', 'py.typed'],
+                    'pivy.gui': ['*.pyi']},
       classifiers=[_f for _f in PIVY_CLASSIFIERS.split("\n") if _f],
       license="BSD License",
       platforms=['Any']

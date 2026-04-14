@@ -9,9 +9,17 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   buildme:
     runs-on: ${{ matrix.config.os }}
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      # Keep the vcpkg toolchain pinned and update it deliberately in CI refreshes.
+      VCPKG_REF: c27eeddba73f608f10605d80bc0144c1166f8fb7
+      VCPKG_INSTALL_ROOT: ${{ github.workspace }}/vcpkg/installed
     strategy:
       matrix:
         config:
@@ -23,10 +31,10 @@ jobs:
             vcpkg_triplet: x64-windows-release
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -36,20 +44,44 @@ jobs:
           brew install swig
           brew link --overwrite swig
 
-      - name: vcpkg build
-        uses: johnwason/vcpkg-action@v6
-        id: vcpkg
+      - name: Checkout vcpkg
+        uses: actions/checkout@v6
         with:
-          manifest-dir: ${{ github.workspace }}
-          triplet: ${{ matrix.config.vcpkg_triplet }}
-          cache-key: ${{ matrix.config.os }}
-          revision: master
-          token: ${{ github.token }}
-          github-binarycache: true
+          repository: microsoft/vcpkg
+          path: vcpkg
+          ref: ${{ env.VCPKG_REF }}
+          # vcpkg versioning is more reliable with complete history available.
+          fetch-depth: 0
+
+      - name: Bootstrap vcpkg (Windows)
+        if: runner.os == 'Windows'
+        working-directory: ${{ env.VCPKG_ROOT }}
+        run: bootstrap-vcpkg.bat
+        shell: cmd
+
+      - name: Bootstrap vcpkg (Unix)
+        if: runner.os != 'Windows'
+        working-directory: ${{ env.VCPKG_ROOT }}
+        run: ./bootstrap-vcpkg.sh
+        shell: bash
+
+      - name: Install vcpkg dependencies (Windows)
+        if: runner.os == 'Windows'
+        # vcpkg removed the x-gha binary cache provider, so keep installs explicit.
+        run: |
+          & "${{ env.VCPKG_ROOT }}\\vcpkg.exe" install --triplet "${{ matrix.config.vcpkg_triplet }}" --x-manifest-root="${{ github.workspace }}" --x-install-root="${{ env.VCPKG_INSTALL_ROOT }}"
+        shell: pwsh
+
+      - name: Install vcpkg dependencies (Unix)
+        if: runner.os != 'Windows'
+        # vcpkg removed the x-gha binary cache provider, so keep installs explicit.
+        run: |
+          "${{ env.VCPKG_ROOT }}/vcpkg" install --triplet "${{ matrix.config.vcpkg_triplet }}" --x-manifest-root="${{ github.workspace }}" --x-install-root="${{ env.VCPKG_INSTALL_ROOT }}"
+        shell: bash
 
       - name: Configure CMake
         run: |
-          cmake -S . -B build -DCMAKE_INSTALL_PREFIX:PATH=${{ github.workspace }}/out -DCMAKE_BUILD_TYPE:STRING=Release -DX_VCPKG_APPLOCAL_DEPS_INSTALL:BOOLEAN=ON ${{ steps.vcpkg.outputs.vcpkg-cmake-config }}
+          cmake -S . -B build -DCMAKE_INSTALL_PREFIX:PATH=${{ github.workspace }}/out -DCMAKE_BUILD_TYPE:STRING=Release -DX_VCPKG_APPLOCAL_DEPS_INSTALL:BOOLEAN=ON -DCMAKE_TOOLCHAIN_FILE=${{ env.VCPKG_ROOT }}/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=${{ matrix.config.vcpkg_triplet }} -DVCPKG_MANIFEST_MODE=OFF
 
       - name: Build project
         run: |

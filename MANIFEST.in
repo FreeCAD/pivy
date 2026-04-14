@@ -7,4 +7,9 @@ graft examples
 graft interfaces
 graft pivy
 graft SoPyScript
+include tools/generate_pivy_stubs.py
+include tools/__init__.py
+include tools/validate_pivy_stubs.py
+include tools/pivy_stub_validation_data.py
+include tools/pivy_stub_generation_data.py
 graft tests
