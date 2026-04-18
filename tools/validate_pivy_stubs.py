@@ -604,6 +604,36 @@ def validate_stub_files(package_dir):
                 assert_private_cast_stub(path, tree)
 
 
+def assert_committed_stub_files_match(generated_package_dir, committed_package_dir):
+    expected = REQUIRED_STUBS + ("py.typed",)
+    missing = []
+    mismatched = []
+
+    for relative in expected:
+        generated_path = os.path.join(generated_package_dir, relative)
+        committed_path = os.path.join(committed_package_dir, relative)
+        if not os.path.exists(committed_path):
+            missing.append(relative)
+            continue
+
+        with open(generated_path, "rb") as generated_file:
+            generated = generated_file.read()
+        with open(committed_path, "rb") as committed_file:
+            committed = committed_file.read()
+        if generated != committed:
+            mismatched.append(relative)
+
+    if missing:
+        raise AssertionError(
+            "missing committed stub files: %s" % ", ".join(missing)
+        )
+    if mismatched:
+        raise AssertionError(
+            "committed stub files differ from generated output: %s"
+            % ", ".join(mismatched)
+        )
+
+
 def run_mypy_import_check(python_executable, package_dir):
     command = [python_executable, "-m", "mypy", "-c", MYPY_SNIPPET]
     env = os.environ.copy()
@@ -638,10 +668,23 @@ def main():
         default=sys.executable,
         help="Python executable used to run the mypy import check",
     )
+    parser.add_argument(
+        "--committed-package-dir",
+        default="pivy",
+        help="source package directory containing committed .pyi stubs",
+    )
+    parser.add_argument(
+        "--skip-committed-check",
+        action="store_true",
+        help="skip comparing generated stubs against committed source stubs",
+    )
     args = parser.parse_args()
 
     package_dir = os.path.abspath(args.package_dir)
     validate_stub_files(package_dir)
+    if not args.skip_committed_check:
+        committed_package_dir = os.path.abspath(args.committed_package_dir)
+        assert_committed_stub_files_match(package_dir, committed_package_dir)
     run_mypy_import_check(args.python, package_dir)
 
     print("Pivy stubs validated")
