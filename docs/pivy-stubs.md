@@ -1,4 +1,39 @@
-# Pivy Stub TODOs
+# Pivy Stubs
+
+## Editor and Checker Smoke Test
+
+The generated `pivy.coin` and `pivy.gui.soqt` `.pyi` files are committed next
+to the package so editors can use them directly from a checkout. After pixi has
+created the environment, VS Code can use the checked-in `.vscode` workspace
+settings directly. Open the repository root, install the recommended Python and
+Pylance extensions when prompted, and use
+`Terminal > Run Task... > Pivy: typecheck stubs`.
+
+The workspace points the Python extension at the pixi environment:
+
+- POSIX: `.pixi/envs/default/bin/python`
+- Windows: `.pixi\envs\default\python.exe`
+
+Pyright/Pylance should then resolve `from pivy import coin` and
+`from pivy.gui import soqt` from the committed stubs. The same smoke check can
+be run without an editor:
+
+```sh
+pixi run typecheck_stubs
+```
+
+That task runs both:
+
+```sh
+pixi run typecheck_stubs_pyright
+pixi run typecheck_stubs_pyrefly
+```
+
+`pixi run test_stubs` still validates the generated build stubs, runs the mypy
+import check, and compares the generated files against the committed source
+stubs to catch drift.
+
+## Stub TODOs
 
 ## Runtime-Unsupported SWIG Surfaces
 

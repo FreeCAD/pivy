@@ -1,0 +1,21 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.pixi/envs/default",
+  "python.terminal.activateEnvironment": false,
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}"
+  ],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingModuleSource": "none"
+  },
+  "python.analysis.exclude": [
+    "**/.pixi",
+    "**/build",
+    "**/*.egg-info"
+  ],
+  "files.exclude": {
+    "**/.pixi": true,
+    "**/build": true
+  }
+}

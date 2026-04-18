@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Pivy: install pixi environment",
+      "type": "shell",
+      "command": "pixi",
+      "args": [
+        "install"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Pivy: typecheck stubs",
+      "type": "shell",
+      "command": "pixi",
+      "args": [
+        "run",
+        "typecheck_stubs"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pivy: validate generated stubs",
+      "type": "shell",
+      "command": "pixi",
+      "args": [
+        "run",
+        "test_stubs"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}
