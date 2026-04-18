@@ -18,6 +18,8 @@ pyside6 = "*"
 simage = "*"
 flake8 = "*"
 mypy = "*"
+pyright = ">=1.1.408,<2"
+pyrefly = ">=0.61.1,<0.62"
 
 
 [target.linux-64.dependencies]
@@ -51,3 +53,6 @@ test_quarter = { cmd = ["python", "tests/quarter_tests.py"], depends-on = ["buil
 lint = { cmd = ["flake8", ".", "--count", "--select=E901,E999,F821,F822,F823",
                 "--show-source", "--statistics", "--exclude=build,.pixi,.svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.eggs,.egg,SoPyScript"]}
 test_stubs = { cmd = ["python", "-m", "tools.validate_pivy_stubs"], depends-on = ["build"]}
+typecheck_stubs_pyright = { cmd = ["pyright", "--warnings", "tests/typecheck/pivy_smoke.py"]}
+typecheck_stubs_pyrefly = { cmd = ["pyrefly", "check", "--summary=none", "--search-path", ".", "tests/typecheck/pivy_smoke.py"]}
+typecheck_stubs = { depends-on = ["typecheck_stubs_pyright", "typecheck_stubs_pyrefly"]}
