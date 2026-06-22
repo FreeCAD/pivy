@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.18...3.30)
 project(pivy_cmake_setup CXX)
 
+file(READ "${PROJECT_SOURCE_DIR}/pivy/pivy_meta.py" _pivy_meta)
+string(REGEX MATCH "__version__[ \t]*=[ \t]*[\"']([^\"']+)[\"']"
+    _pivy_version_match "${_pivy_meta}")
+if (NOT _pivy_version_match)
+    message(FATAL_ERROR "Could not determine Pivy version: __version__ not found")
+endif()
+set(PIVY_VERSION "${CMAKE_MATCH_1}" CACHE INTERNAL "Pivy version string")
+
 if (NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
     set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 endif()
