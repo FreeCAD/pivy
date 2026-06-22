@@ -9,6 +9,8 @@ option(DISABLE_SWIG_WARNINGS "if on no swig warnings are shown" OFF)
 option(PIVY_USE_QT6 "Prefer Qt6 over Qt5 if available" OFF)
 option(PIVY_USE_SOQT "Generate bindings for SoQt" ON)
 option(PIVY_GENERATE_PYI "Generate .pyi stubs with mypy.stubgen when available" ON)
+set(PIVY_PACKAGE_OUTPUT_DIR "${PROJECT_BINARY_DIR}/pivy"
+    CACHE PATH "Build-tree output directory for the importable pivy package")
 
 find_package(SWIG 4.0.0 REQUIRED)
 include(${SWIG_USE_FILE})
@@ -54,6 +56,8 @@ if (NOT PIVY_Python_SITEARCH)
 endif()
 
 file(TO_CMAKE_PATH "${PIVY_Python_SITEARCH}" PIVY_Python_SITEARCH)
+file(TO_CMAKE_PATH "${PIVY_PACKAGE_OUTPUT_DIR}" PIVY_PACKAGE_OUTPUT_DIR)
+get_filename_component(PIVY_PACKAGE_PARENT_DIR "${PIVY_PACKAGE_OUTPUT_DIR}" DIRECTORY)
 
 if (Python_FOUND)
 	MESSAGE(STATUS "Python_FOUND: TRUE")
@@ -85,8 +89,8 @@ include(TargetCopyFiles.cmake)
 
 add_custom_target(pivy ALL)
 add_copy_directory(pivy ${PROJECT_SOURCE_DIR}/pivy
-    DESTINATION ${CMAKE_BINARY_DIR}/pivy
-    GLOB *.py *.pyi py.typed
+    DESTINATION "${PIVY_PACKAGE_OUTPUT_DIR}"
+    GLOB "*.py" "*.pyi" "py.typed"
 )
 
 add_subdirectory(interfaces)
@@ -108,7 +112,7 @@ if(PIVY_GENERATE_PYI)
             list(APPEND PIVY_STUBGEN_ARGS --module ${PIVY_STUB_MODULE})
         endforeach()
 
-        set(PIVY_STUB_OUTPUTS ${CMAKE_BINARY_DIR}/pivy/py.typed)
+        set(PIVY_STUB_OUTPUTS ${PIVY_PACKAGE_OUTPUT_DIR}/py.typed)
         foreach(PIVY_STUB_MODULE IN LISTS PIVY_STUB_MODULES)
             string(REPLACE "." "/" PIVY_STUB_MODULE_PATH ${PIVY_STUB_MODULE})
             get_filename_component(PIVY_STUB_MODULE_DIR
@@ -118,10 +122,10 @@ if(PIVY_GENERATE_PYI)
                 ${PIVY_STUB_MODULE_PATH} NAME
             )
             list(APPEND PIVY_STUB_OUTPUTS
-                ${CMAKE_BINARY_DIR}/${PIVY_STUB_MODULE_PATH}.pyi
+                ${PIVY_PACKAGE_PARENT_DIR}/${PIVY_STUB_MODULE_PATH}.pyi
             )
             set(PIVY_STUB_PRIVATE_OUTPUT
-                ${CMAKE_BINARY_DIR}/${PIVY_STUB_MODULE_DIR}/_${PIVY_STUB_MODULE_NAME}.pyi
+                ${PIVY_PACKAGE_PARENT_DIR}/${PIVY_STUB_MODULE_DIR}/_${PIVY_STUB_MODULE_NAME}.pyi
             )
             list(APPEND PIVY_STUB_OUTPUTS
                 ${PIVY_STUB_PRIVATE_OUTPUT}
@@ -129,49 +133,49 @@ if(PIVY_GENERATE_PYI)
         endforeach()
 
         set(PIVY_STUB_PREPARE_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/pivy
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${PIVY_PACKAGE_OUTPUT_DIR}
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 $<TARGET_FILE:coin>
-                ${CMAKE_BINARY_DIR}/pivy/$<TARGET_FILE_NAME:coin>
+                ${PIVY_PACKAGE_OUTPUT_DIR}/$<TARGET_FILE_NAME:coin>
         )
         set(PIVY_STUB_CLEANUP_COMMANDS
             COMMAND ${CMAKE_COMMAND} -E rm -f
-                ${CMAKE_BINARY_DIR}/pivy/$<TARGET_FILE_NAME:coin>
+                ${PIVY_PACKAGE_OUTPUT_DIR}/$<TARGET_FILE_NAME:coin>
         )
 
         if(PIVY_BUILD_SOQT)
             list(APPEND PIVY_STUB_PREPARE_COMMANDS
-                COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/pivy/gui
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${PIVY_PACKAGE_OUTPUT_DIR}/gui
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                     $<TARGET_FILE:soqt>
-                    ${CMAKE_BINARY_DIR}/pivy/gui/$<TARGET_FILE_NAME:soqt>
+                    ${PIVY_PACKAGE_OUTPUT_DIR}/gui/$<TARGET_FILE_NAME:soqt>
             )
             list(APPEND PIVY_STUB_CLEANUP_COMMANDS
                 COMMAND ${CMAKE_COMMAND} -E rm -f
-                    ${CMAKE_BINARY_DIR}/pivy/gui/$<TARGET_FILE_NAME:soqt>
+                    ${PIVY_PACKAGE_OUTPUT_DIR}/gui/$<TARGET_FILE_NAME:soqt>
             )
         endif()
 
         add_custom_command(
-            OUTPUT ${CMAKE_BINARY_DIR}/pivy/.pyi-stamp
+            OUTPUT ${PIVY_PACKAGE_OUTPUT_DIR}/.pyi-stamp
             BYPRODUCTS ${PIVY_STUB_OUTPUTS}
             ${PIVY_STUB_PREPARE_COMMANDS}
             COMMAND ${Python_EXECUTABLE}
                 ${CMAKE_SOURCE_DIR}/tools/generate_pivy_stubs.py
                 --stubgen ${PIVY_STUBGEN_EXECUTABLE}
-                --output ${CMAKE_BINARY_DIR}
-                --stamp ${CMAKE_BINARY_DIR}/pivy/.pyi-stamp
+                --output ${PIVY_PACKAGE_PARENT_DIR}
+                --stamp ${PIVY_PACKAGE_OUTPUT_DIR}/.pyi-stamp
                 ${PIVY_STUBGEN_ARGS}
             ${PIVY_STUB_CLEANUP_COMMANDS}
             DEPENDS ${CMAKE_SOURCE_DIR}/tools/generate_pivy_stubs.py
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            WORKING_DIRECTORY ${PIVY_PACKAGE_PARENT_DIR}
             COMMENT "Generating Pivy .pyi stubs"
             VERBATIM
             COMMAND_EXPAND_LISTS
         )
 
         add_custom_target(pivy_stubs ALL
-            DEPENDS ${CMAKE_BINARY_DIR}/pivy/.pyi-stamp
+            DEPENDS ${PIVY_PACKAGE_OUTPUT_DIR}/.pyi-stamp
         )
         add_dependencies(pivy_stubs ${PIVY_STUB_TARGETS})
     else()
@@ -180,8 +184,8 @@ if(PIVY_GENERATE_PYI)
 endif()
 
 install(DIRECTORY
-    ${CMAKE_BINARY_DIR}/pivy
-    DESTINATION ${PIVY_Python_SITEARCH}
+    "${PIVY_PACKAGE_OUTPUT_DIR}/"
+    DESTINATION "${PIVY_Python_SITEARCH}/pivy"
     FILES_MATCHING
     PATTERN "*.py"
     PATTERN "*.so"

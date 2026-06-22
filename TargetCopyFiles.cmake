@@ -137,6 +137,7 @@ function(add_copy_directory dircopy_TARGET directory)
         set(input "${dircopy_RELATIVE}/${infile}")
         get_filename_component(output_abs "${output}" ABSOLUTE)
         get_filename_component(input_abs "${input}" ABSOLUTE)
+        get_filename_component(output_dir "${output_abs}" DIRECTORY)
         set(verbosity COMMENT "Copying ${infile} to ${dircopy_DESTINATION}")
         if(NOT ${dircopy_VERBOSE})
             unset(verbosity)
@@ -145,6 +146,8 @@ function(add_copy_directory dircopy_TARGET directory)
             add_custom_command(
                 TARGET ${dircopy_TARGET}
                 PRE_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory
+                    ${output_dir}
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
                     ${input_abs} ${output_abs}
                 ${verbosity}
@@ -152,4 +155,3 @@ function(add_copy_directory dircopy_TARGET directory)
         endif()
     endforeach()
 endfunction()
-

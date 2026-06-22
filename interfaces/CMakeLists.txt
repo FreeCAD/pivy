@@ -9,6 +9,23 @@ function(set_swig_properties NAME)
     endif(DISABLE_SWIG_WARNINGS)
 endfunction()
 
+function(configure_pivy_module_target TARGET_NAME OUTPUT_DIR)
+    set_target_properties(${TARGET_NAME} PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
+        RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
+        AUTOMOC OFF
+        AUTOUIC OFF
+        AUTORCC OFF
+    )
+
+    foreach(CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
+        string(TOUPPER "${CONFIG}" CONFIG_UPPER)
+        set_target_properties(${TARGET_NAME} PROPERTIES
+            LIBRARY_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${OUTPUT_DIR}"
+            RUNTIME_OUTPUT_DIRECTORY_${CONFIG_UPPER} "${OUTPUT_DIR}"
+        )
+    endforeach()
+endfunction()
 
 set_swig_properties(coin.i)
 
@@ -23,8 +40,11 @@ endif()
 
 swig_add_library(coin
     LANGUAGE python
-    OUTPUT_DIR ${CMAKE_BINARY_DIR}/pivy
+    OUTPUT_DIR "${PIVY_PACKAGE_OUTPUT_DIR}"
+    OUTFILE_DIR "${CMAKE_CURRENT_BINARY_DIR}"
     SOURCES coin.i)
+configure_pivy_module_target(coin "${PIVY_PACKAGE_OUTPUT_DIR}")
+add_dependencies(pivy coin)
 
 if (APPLE)
     set_target_properties(coin PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
@@ -62,8 +82,11 @@ if(PIVY_BUILD_SOQT)
 
     swig_add_library(soqt
         LANGUAGE python
-        OUTPUT_DIR ${CMAKE_BINARY_DIR}/pivy/gui
+        OUTPUT_DIR "${PIVY_PACKAGE_OUTPUT_DIR}/gui"
+        OUTFILE_DIR "${CMAKE_CURRENT_BINARY_DIR}"
         SOURCES soqt.i)
+    configure_pivy_module_target(soqt "${PIVY_PACKAGE_OUTPUT_DIR}/gui")
+    add_dependencies(pivy soqt)
 
     if (APPLE)
         set_target_properties(soqt PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
