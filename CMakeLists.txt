@@ -7,6 +7,7 @@ endif()
 
 option(DISABLE_SWIG_WARNINGS "if on no swig warnings are shown" OFF)
 option(PIVY_USE_QT6 "Prefer Qt6 over Qt5 if available" OFF)
+option(PIVY_USE_SOQT "Generate bindings for SoQt" ON)
 option(PIVY_GENERATE_PYI "Generate .pyi stubs with mypy.stubgen when available" ON)
 
 find_package(SWIG 4.0.0 REQUIRED)
@@ -26,9 +27,15 @@ else()
 
     add_library(Coin::Coin ALIAS Coin)
 endif()
-find_package(SoQt CONFIG)
+set(PIVY_BUILD_SOQT OFF)
+if(PIVY_USE_SOQT)
+    find_package(SoQt CONFIG)
+    if(SoQt_FOUND)
+        set(PIVY_BUILD_SOQT ON)
+    endif()
+endif()
 
-if (SoQt_FOUND)
+if(PIVY_BUILD_SOQT)
     if (PIVY_USE_QT6)
         find_package(Qt6 COMPONENTS Core Widgets Gui REQUIRED)
     else (PIVY_USE_QT6)
@@ -56,7 +63,7 @@ if (Coin_FOUND)
 	MESSAGE(STATUS "COIN_VERSION: ${Coin_VERSION}")
 endif()
 
-if (SoQt_FOUND)
+if(PIVY_BUILD_SOQT)
 	MESSAGE(STATUS "SOQT_FOUND: True")
 	MESSAGE(STATUS "SOQT_INCLUDE_DIRS: ${SoQt_INCLUDE_DIRS}")
 	MESSAGE(STATUS "SOQT_LIB_DIRS: ${SoQt_LIBRARY_DIRS}")
@@ -87,7 +94,7 @@ if(PIVY_GENERATE_PYI)
         set(PIVY_STUB_MODULES pivy.coin)
         set(PIVY_STUB_TARGETS pivy coin)
 
-        if(SoQt_FOUND)
+        if(PIVY_BUILD_SOQT)
             list(APPEND PIVY_STUB_MODULES pivy.gui.soqt)
             list(APPEND PIVY_STUB_TARGETS soqt)
         endif()
@@ -128,7 +135,7 @@ if(PIVY_GENERATE_PYI)
                 ${CMAKE_BINARY_DIR}/pivy/$<TARGET_FILE_NAME:coin>
         )
 
-        if(SoQt_FOUND)
+        if(PIVY_BUILD_SOQT)
             list(APPEND PIVY_STUB_PREPARE_COMMANDS
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/pivy/gui
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
