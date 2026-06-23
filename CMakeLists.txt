@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.18...3.30)
 project(pivy_cmake_setup CXX)
 
+# Pivy does not use C++20 modules. Disable CMake's module dependency scanning
+# when Pivy is embedded in projects that build with C++20 or newer.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 file(READ "${PROJECT_SOURCE_DIR}/pivy/pivy_meta.py" _pivy_meta)
 string(REGEX MATCH "__version__[ \t]*=[ \t]*[\"']([^\"']+)[\"']"
     _pivy_version_match "${_pivy_meta}")
