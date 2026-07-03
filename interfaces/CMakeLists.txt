@@ -18,6 +18,21 @@ function(configure_pivy_module_target TARGET_NAME OUTPUT_DIR)
         AUTORCC OFF
     )
 
+    # Make sure that on Windows, if the build is Debug mode, the appropriate suffix
+    # gets added to the *.pyd file -- generally it's "_d", but to be thorough and
+    # future proof, ask the python intepreter what it expects.
+    if(WIN32)
+        execute_process(
+            COMMAND ${Python_EXECUTABLE} -c
+                "import importlib.machinery as m; print(m.EXTENSION_SUFFIXES[-1])"
+            OUTPUT_VARIABLE PIVY_EXTENSION_SUFFIX
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if(PIVY_EXTENSION_SUFFIX)
+            set_target_properties(${TARGET_NAME} PROPERTIES
+                SUFFIX "${PIVY_EXTENSION_SUFFIX}")
+        endif()
+    endif()
+
     foreach(CONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
         string(TOUPPER "${CONFIG}" CONFIG_UPPER)
         set_target_properties(${TARGET_NAME} PROPERTIES
