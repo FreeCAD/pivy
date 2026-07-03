@@ -23,7 +23,9 @@ else()
     set(Coin_INCLUDE_DIR ${Coin_SOURCE_DIR}/include)
     set(Coin_GENERATED_INCLUDE_DIR ${Coin_BINARY_DIR}/include)
 
-    add_library(Coin::Coin ALIAS Coin)
+    if (NOT TARGET Coin::Coin)
+        add_library(Coin::Coin ALIAS Coin)
+    endif()
 endif()
 find_package(SoQt CONFIG)
 
