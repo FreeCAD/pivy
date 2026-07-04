@@ -22,7 +22,7 @@
 #else
     PyObject *  b_pixels = pixels;
     if  (PyUnicode_Check(pixels)){
-      b_pixels = PyUnicode_AsEncodedString(pixels, "utf-8", "Error ~");
+      b_pixels = PyUnicode_AsEncodedString(pixels, "utf-8", "strict");
     }
     PyBytes_AsStringAndSize(b_pixels, (char **)&image, &len);
 #endif

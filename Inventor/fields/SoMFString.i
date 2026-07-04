@@ -19,11 +19,11 @@
         }
         else if  (PyUnicode_Check(item))
         {
-          $1[i] = PyBytes_AsString(PyUnicode_AsEncodedString(item, "utf-8", "Error ~"));
+          $1[i] = PyBytes_AsString(PyUnicode_AsEncodedString(item, "utf-8", "strict"));
         }
         else
         {
-          $1[i] = PyBytes_AsString(PyUnicode_AsEncodedString(PyObject_Str(item), "utf-8", "Error ~"));
+          $1[i] = PyBytes_AsString(PyUnicode_AsEncodedString(PyObject_Str(item), "utf-8", "strict"));
         }
 #endif
         Py_DECREF(item);
@@ -70,7 +70,7 @@ def setValues(*args):
 #ifdef PY_2
         PyString_FromString(result[i].getString());
 #else
-        PyUnicode_DecodeUTF8(result[i].getString(), strlen(result[i].getString()), "Error ~");
+        PyUnicode_DecodeUTF8(result[i].getString(), strlen(result[i].getString()), "strict");
 #endif
       PyList_SetItem($result, i, str);
     }
