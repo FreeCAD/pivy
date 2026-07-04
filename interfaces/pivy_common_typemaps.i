@@ -312,7 +312,7 @@ autocast_event(SoEvent * event)
     $1 = new SbName(PyBytes_AsString($input));
   }
   else if  (PyUnicode_Check($input)){
-    $1 = new SbName(PyBytes_AsString(PyUnicode_AsEncodedString($input, "utf-8", "Error ~")));
+    $1 = new SbName(PyBytes_AsString(PyUnicode_AsEncodedString($input, "utf-8", "strict")));
   }
 #endif
    else {
@@ -359,7 +359,7 @@ autocast_event(SoEvent * event)
     $1 = SbName(PyBytes_AsString($input));
   }
   else if  (PyUnicode_Check($input)){
-    $1 = SbName(PyBytes_AsString(PyUnicode_AsEncodedString($input, "utf-8", "Error ~")));
+    $1 = SbName(PyBytes_AsString(PyUnicode_AsEncodedString($input, "utf-8", "strict")));
   }
 #endif
   else {
@@ -401,7 +401,7 @@ autocast_event(SoEvent * event)
     $1 = new SbString(PyBytes_AsString($input));
   }
   else if  (PyUnicode_Check($input)){
-     $1 = new SbString(PyBytes_AsString(PyUnicode_AsEncodedString($input, "utf-8", "Error ~")));
+     $1 = new SbString(PyBytes_AsString(PyUnicode_AsEncodedString($input, "utf-8", "strict")));
   }
 #endif
   else {
