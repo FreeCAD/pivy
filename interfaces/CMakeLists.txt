@@ -9,6 +9,17 @@ function(set_swig_properties NAME)
     endif(DISABLE_SWIG_WARNINGS)
 endfunction()
 
+file(GLOB_RECURSE PIVY_COIN_PUBLIC_HEADERS CONFIGURE_DEPENDS
+    "${Coin_INCLUDE_DIR}/Inventor/*.h")
+set(PIVY_COIN_SWIG_DEPENDS
+    "${PROJECT_SOURCE_DIR}/interfaces/coin_header_includes.h"
+    ${PIVY_COIN_PUBLIC_HEADERS})
+if (Coin_GENERATED_INCLUDE_DIR)
+    file(GLOB_RECURSE PIVY_COIN_GENERATED_HEADERS CONFIGURE_DEPENDS
+        "${Coin_GENERATED_INCLUDE_DIR}/Inventor/*.h")
+    list(APPEND PIVY_COIN_SWIG_DEPENDS ${PIVY_COIN_GENERATED_HEADERS})
+endif()
+
 function(configure_pivy_module_target TARGET_NAME OUTPUT_DIR)
     set_target_properties(${TARGET_NAME} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
@@ -43,6 +54,7 @@ function(configure_pivy_module_target TARGET_NAME OUTPUT_DIR)
 endfunction()
 
 set_swig_properties(coin.i)
+set_property(SOURCE coin.i APPEND PROPERTY DEPENDS "${PIVY_COIN_SWIG_DEPENDS}")
 
 # remember: the order of the includes is important!
 # swig needs the generated headers first (these headers are replacing the origin Inventor headers)
@@ -86,6 +98,7 @@ set_target_properties(coin PROPERTIES BUILD_RPATH "$ORIGIN" INSTALL_RPATH "$ORIG
 if(PIVY_BUILD_SOQT)
 
     set_swig_properties(soqt.i)
+    set_property(SOURCE soqt.i APPEND PROPERTY DEPENDS "${PIVY_COIN_SWIG_DEPENDS}")
 
     # remember: the order of the includes is important!
     # swig needs the generated headers first (these headers are replacing the origin Inventor headers)
