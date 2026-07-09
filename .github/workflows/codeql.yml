@@ -2,9 +2,9 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "freecad-master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "freecad-master" ]
   schedule:
     - cron: "22 10 * * 4"
 

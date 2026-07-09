@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - master
+      - freecad-master
       - build_with_vcpkg
   pull_request:
     branches:
       - master
+      - freecad-master
 
 permissions:
   contents: read
