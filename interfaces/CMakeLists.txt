@@ -53,6 +53,17 @@ function(configure_pivy_module_target TARGET_NAME OUTPUT_DIR)
     endforeach()
 endfunction()
 
+function(configure_pivy_module_rpath TARGET_NAME)
+    # Keep build-tree imports working via $ORIGIN, but let embedded consumers
+    # override the install RUNPATH to match their final package layout.
+    cmake_policy(SET CMP0068 NEW)  # Use RUNPATH instead of RPATH, default from CMake 3.9
+    set_target_properties(${TARGET_NAME} PROPERTIES
+        BUILD_RPATH "$ORIGIN"
+        INSTALL_RPATH "${PIVY_MODULE_INSTALL_RPATH}"
+        INSTALL_RPATH_USE_LINK_PATH FALSE
+    )
+endfunction()
+
 set_swig_properties(coin.i)
 set_property(SOURCE coin.i APPEND PROPERTY DEPENDS "${PIVY_COIN_SWIG_DEPENDS}")
 
@@ -90,10 +101,8 @@ target_include_directories(coin
     )
 
 target_link_libraries(coin PUBLIC Coin::Coin Python::Module)
-install(TARGETS coin DESTINATION ${PIVY_Python_SITEARCH}/pivy)
-
-cmake_policy(SET CMP0068 NEW)  # Use RUNPATH instead of RPATH, default from CMake 3.9
-set_target_properties(coin PROPERTIES BUILD_RPATH "$ORIGIN" INSTALL_RPATH "$ORIGIN")
+install(TARGETS coin DESTINATION "${PIVY_PACKAGE_INSTALL_DIR}")
+configure_pivy_module_rpath(coin)
 
 if(PIVY_BUILD_SOQT)
 
@@ -141,5 +150,6 @@ if(PIVY_BUILD_SOQT)
         )
 
     target_link_libraries(soqt PUBLIC SoQt::SoQt Python::Module)
-    install(TARGETS soqt DESTINATION ${PIVY_Python_SITEARCH}/pivy/gui)
+    install(TARGETS soqt DESTINATION "${PIVY_PACKAGE_INSTALL_DIR}/gui")
+    configure_pivy_module_rpath(soqt)
 endif()
