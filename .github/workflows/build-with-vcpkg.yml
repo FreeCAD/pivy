@@ -1,15 +1,7 @@
 name: Build with vcpkg
 
 on:
-  push:
-    branches:
-      - master
-      - freecad-master
-      - build_with_vcpkg
-  pull_request:
-    branches:
-      - master
-      - freecad-master
+  workflow_dispatch:
 
 permissions:
   contents: read
