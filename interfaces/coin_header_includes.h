@@ -582,7 +582,6 @@
 #include <Inventor/SoSceneManager.h>
 #include <Inventor/SoType.h>
 #include <Inventor/system/gl.h>
-#include <Inventor/system/inttypes.h>
 #include <Inventor/threads/SbBarrier.h>
 #include <Inventor/threads/SbCondVar.h>
 #include <Inventor/threads/SbFifo.h>
