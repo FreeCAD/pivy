@@ -2,9 +2,9 @@ name: lint-build-test
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, freecad-master ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, freecad-master ]
 
 jobs:
   build_n_lint:

@@ -21,6 +21,10 @@ option(DISABLE_SWIG_WARNINGS "if on no swig warnings are shown" OFF)
 option(PIVY_USE_QT6 "Prefer Qt6 over Qt5 if available" OFF)
 option(PIVY_USE_SOQT "Generate bindings for SoQt" ON)
 option(PIVY_GENERATE_PYI "Generate .pyi stubs with mypy.stubgen when available" ON)
+set(PIVY_MODULE_INSTALL_RPATH "$ORIGIN"
+    CACHE STRING "RUNPATH used for installed Pivy extension modules")
+set(PIVY_PACKAGE_INSTALL_DIR ""
+    CACHE STRING "Install directory for the importable pivy package")
 set(PIVY_PACKAGE_OUTPUT_DIR "${PROJECT_BINARY_DIR}/pivy"
     CACHE PATH "Build-tree output directory for the importable pivy package")
 
@@ -66,14 +70,20 @@ find_package(Python REQUIRED COMPONENTS Interpreter Development)
 if (NOT PIVY_Python_SITEARCH)
     SET(PIVY_Python_SITEARCH ${Python_SITEARCH})
 endif()
+# Keep the old sitearch override as the defaulting fallback, but let embedded
+# consumers target a package-specific install directory directly.
+if (NOT PIVY_PACKAGE_INSTALL_DIR)
+    set(PIVY_PACKAGE_INSTALL_DIR "${PIVY_Python_SITEARCH}/pivy")
+endif()
 
 file(TO_CMAKE_PATH "${PIVY_Python_SITEARCH}" PIVY_Python_SITEARCH)
+file(TO_CMAKE_PATH "${PIVY_PACKAGE_INSTALL_DIR}" PIVY_PACKAGE_INSTALL_DIR)
 file(TO_CMAKE_PATH "${PIVY_PACKAGE_OUTPUT_DIR}" PIVY_PACKAGE_OUTPUT_DIR)
 get_filename_component(PIVY_PACKAGE_PARENT_DIR "${PIVY_PACKAGE_OUTPUT_DIR}" DIRECTORY)
 
 if (Python_FOUND)
 	MESSAGE(STATUS "Python_FOUND: TRUE")
-	MESSAGE(STATUS "PIVY_Python_SITEARCH: ${PIVY_Python_SITEARCH}")
+	MESSAGE(STATUS "PIVY_PACKAGE_INSTALL_DIR: ${PIVY_PACKAGE_INSTALL_DIR}")
 endif()
 
 if (Coin_FOUND)
@@ -144,41 +154,17 @@ if(PIVY_GENERATE_PYI)
             )
         endforeach()
 
-        set(PIVY_STUB_PREPARE_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${PIVY_PACKAGE_OUTPUT_DIR}
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                $<TARGET_FILE:coin>
-                ${PIVY_PACKAGE_OUTPUT_DIR}/$<TARGET_FILE_NAME:coin>
-        )
-        set(PIVY_STUB_CLEANUP_COMMANDS
-            COMMAND ${CMAKE_COMMAND} -E rm -f
-                ${PIVY_PACKAGE_OUTPUT_DIR}/$<TARGET_FILE_NAME:coin>
-        )
-
-        if(PIVY_BUILD_SOQT)
-            list(APPEND PIVY_STUB_PREPARE_COMMANDS
-                COMMAND ${CMAKE_COMMAND} -E make_directory ${PIVY_PACKAGE_OUTPUT_DIR}/gui
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    $<TARGET_FILE:soqt>
-                    ${PIVY_PACKAGE_OUTPUT_DIR}/gui/$<TARGET_FILE_NAME:soqt>
-            )
-            list(APPEND PIVY_STUB_CLEANUP_COMMANDS
-                COMMAND ${CMAKE_COMMAND} -E rm -f
-                    ${PIVY_PACKAGE_OUTPUT_DIR}/gui/$<TARGET_FILE_NAME:soqt>
-            )
-        endif()
-
         add_custom_command(
             OUTPUT ${PIVY_PACKAGE_OUTPUT_DIR}/.pyi-stamp
             BYPRODUCTS ${PIVY_STUB_OUTPUTS}
-            ${PIVY_STUB_PREPARE_COMMANDS}
+            # The extension modules already build into the importable package
+            # tree, which is also what stubgen imports from via PYTHONPATH.
             COMMAND ${Python_EXECUTABLE}
                 ${CMAKE_SOURCE_DIR}/tools/generate_pivy_stubs.py
                 --stubgen ${PIVY_STUBGEN_EXECUTABLE}
                 --output ${PIVY_PACKAGE_PARENT_DIR}
                 --stamp ${PIVY_PACKAGE_OUTPUT_DIR}/.pyi-stamp
                 ${PIVY_STUBGEN_ARGS}
-            ${PIVY_STUB_CLEANUP_COMMANDS}
             DEPENDS ${CMAKE_SOURCE_DIR}/tools/generate_pivy_stubs.py
             WORKING_DIRECTORY ${PIVY_PACKAGE_PARENT_DIR}
             COMMENT "Generating Pivy .pyi stubs"
@@ -197,13 +183,11 @@ endif()
 
 install(DIRECTORY
     "${PIVY_PACKAGE_OUTPUT_DIR}/"
-    DESTINATION "${PIVY_Python_SITEARCH}/pivy"
+    DESTINATION "${PIVY_PACKAGE_INSTALL_DIR}"
     FILES_MATCHING
+    # Compiled extension modules install through install(TARGETS ...) so CMake
+    # can rewrite their RUNPATH for the final package layout.
     PATTERN "*.py"
-    PATTERN "*.so"
-    PATTERN "*.dylib"
-    PATTERN "*.dll"
-    PATTERN "*.pyd"
     PATTERN "*.pyi"
     PATTERN "py.typed"
     )

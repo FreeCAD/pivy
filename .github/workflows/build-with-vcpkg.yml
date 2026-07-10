@@ -1,13 +1,7 @@
 name: Build with vcpkg
 
 on:
-  push:
-    branches:
-      - master
-      - build_with_vcpkg
-  pull_request:
-    branches:
-      - master
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -38,10 +32,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install SWIG (macOS only)
+      - name: Install build dependencies (macOS only)
         if: matrix.config.os == 'macos-latest'
         run: |
-          brew install swig
+          brew install autoconf autoconf-archive automake libtool swig
           brew link --overwrite swig
 
       - name: Checkout vcpkg
