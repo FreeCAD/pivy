@@ -160,12 +160,12 @@ if(PIVY_GENERATE_PYI)
             # The extension modules already build into the importable package
             # tree, which is also what stubgen imports from via PYTHONPATH.
             COMMAND ${Python_EXECUTABLE}
-                ${CMAKE_SOURCE_DIR}/tools/generate_pivy_stubs.py
+                ${PROJECT_SOURCE_DIR}/tools/generate_pivy_stubs.py
                 --stubgen ${PIVY_STUBGEN_EXECUTABLE}
                 --output ${PIVY_PACKAGE_PARENT_DIR}
                 --stamp ${PIVY_PACKAGE_OUTPUT_DIR}/.pyi-stamp
                 ${PIVY_STUBGEN_ARGS}
-            DEPENDS ${CMAKE_SOURCE_DIR}/tools/generate_pivy_stubs.py
+            DEPENDS ${PROJECT_SOURCE_DIR}/tools/generate_pivy_stubs.py
             WORKING_DIRECTORY ${PIVY_PACKAGE_PARENT_DIR}
             COMMENT "Generating Pivy .pyi stubs"
             VERBATIM
