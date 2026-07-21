@@ -38,7 +38,12 @@
     PyErr_SetString(PyExc_TypeError,"null reference"); SWIG_fail;
   }
   $3 = PyInt_AsLong(nc);
-  if (PyString_Check(buf)) {
+#ifdef PY_2
+  if (PyString_Check(buf))
+#else
+  if (PyBytes_Check(buf))
+#endif
+  {
     Py_ssize_t len = (*$2)[0] * (*$2)[1] * (*$2)[2] * $3;
 #ifdef PY_2
     PyString_AsStringAndSize(buf, (char **)&image, &len);

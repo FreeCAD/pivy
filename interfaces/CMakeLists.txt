@@ -20,6 +20,13 @@ if (Coin_GENERATED_INCLUDE_DIR)
     list(APPEND PIVY_COIN_SWIG_DEPENDS ${PIVY_COIN_GENERATED_HEADERS})
 endif()
 
+# Track the %included .i typemaps so editing one re-runs SWIG.
+file(GLOB_RECURSE PIVY_SWIG_INTERFACE_FILES CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/interfaces/*.i"
+    "${PROJECT_SOURCE_DIR}/Inventor/*.i"
+    "${PROJECT_SOURCE_DIR}/VolumeViz/*.i")
+list(APPEND PIVY_COIN_SWIG_DEPENDS ${PIVY_SWIG_INTERFACE_FILES})
+
 function(configure_pivy_module_target TARGET_NAME OUTPUT_DIR)
     set_target_properties(${TARGET_NAME} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
