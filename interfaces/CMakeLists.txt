@@ -83,23 +83,24 @@ if (Coin_GENERATED_INCLUDE_DIR)
     set_property(SOURCE coin.i APPEND PROPERTY INCLUDE_DIRECTORIES "${Coin_GENERATED_INCLUDE_DIR}")
 endif()
 
-swig_add_library(coin
+swig_add_library(pivy_coin
     LANGUAGE python
     OUTPUT_DIR "${PIVY_PACKAGE_OUTPUT_DIR}"
     OUTFILE_DIR "${CMAKE_CURRENT_BINARY_DIR}"
     SOURCES coin.i)
-configure_pivy_module_target(coin "${PIVY_PACKAGE_OUTPUT_DIR}")
-add_dependencies(pivy coin)
+set_target_properties(pivy_coin PROPERTIES OUTPUT_NAME coin)
+configure_pivy_module_target(pivy_coin "${PIVY_PACKAGE_OUTPUT_DIR}")
+add_dependencies(pivy pivy_coin)
 
 if (APPLE)
-    set_target_properties(coin PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+    set_target_properties(pivy_coin PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
 
 if (MSVC)
-    set_target_properties(coin PROPERTIES COMPILE_FLAGS "/bigobj")
+    set_target_properties(pivy_coin PROPERTIES COMPILE_FLAGS "/bigobj")
 endif ()
 
-target_include_directories(coin
+target_include_directories(pivy_coin
     PUBLIC
     ${Coin_INCLUDE_DIR}
     ${Python_INCLUDE_DIRS}
@@ -107,9 +108,9 @@ target_include_directories(coin
     ${PROJECT_SOURCE_DIR}/interfaces
     )
 
-target_link_libraries(coin PUBLIC Coin::Coin Python::Module)
-install(TARGETS coin DESTINATION "${PIVY_PACKAGE_INSTALL_DIR}")
-configure_pivy_module_rpath(coin)
+target_link_libraries(pivy_coin PUBLIC Coin::Coin Python::Module)
+install(TARGETS pivy_coin DESTINATION "${PIVY_PACKAGE_INSTALL_DIR}")
+configure_pivy_module_rpath(pivy_coin)
 
 if(PIVY_BUILD_SOQT)
 
@@ -137,7 +138,7 @@ if(PIVY_BUILD_SOQT)
     endif()
 
     if (MSVC)
-        set_target_properties(coin PROPERTIES COMPILE_FLAGS "/bigobj")
+        set_target_properties(pivy_coin PROPERTIES COMPILE_FLAGS "/bigobj")
     endif ()
 
     if (PIVY_USE_QT6)
