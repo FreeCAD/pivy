@@ -53,4 +53,4 @@ convert_SbVec3s_array(PyObject * input, short temp[3])
 
 %apply short *OUTPUT { short &x, short &y, short &z };
 
-%ignore SbVec3s::getValue(void) const;
+%ignore SbVec3s::getValue() const;
