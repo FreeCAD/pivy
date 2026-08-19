@@ -122,7 +122,7 @@ if(PIVY_GENERATE_PYI)
 
     if(PIVY_STUBGEN_EXECUTABLE)
         set(PIVY_STUB_MODULES pivy.coin)
-        set(PIVY_STUB_TARGETS pivy coin)
+        set(PIVY_STUB_TARGETS pivy pivy_coin)
 
         if(PIVY_BUILD_SOQT)
             list(APPEND PIVY_STUB_MODULES pivy.gui.soqt)
