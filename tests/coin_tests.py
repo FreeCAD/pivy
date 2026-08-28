@@ -1150,6 +1150,18 @@ class SbBaseClasses(unittest.TestCase):
             for j in range(i):
                 self.assertEqual(d[i][j], v[j])
 
+    def testVectorGetValue(self):
+        """tests vector getValue() output overloads"""
+
+        v2s = SbVec2s(12, 34)
+        self.assertEqual(tuple(v2s), (12, 34))
+        self.assertEqual(v2s[0], 12)
+        self.assertEqual(v2s[1], 34)
+        self.assertEqual(v2s.getValue(), [12, 34])
+
+        v3s = SbVec3s(12, 34, 56)
+        self.assertEqual(v3s.getValue(), [12, 34, 56])
+
     def testVecdDBMatrixOperators(self):
         """tests operators between vec and matrix classes, double precision"""
         v = SbVec3d(1,0,0)
