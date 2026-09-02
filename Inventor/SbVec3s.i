@@ -51,6 +51,8 @@ convert_SbVec3s_array(PyObject * input, short temp[3])
 %}
 }
 
+// SWIG 4.4 and 4.5 normalize empty parameter lists differently.
+// Ignore every overload, then restore only the output-reference overload.
+%ignore SbVec3s::getValue;
+%rename(getValue) SbVec3s::getValue(short &x, short &y, short &z) const;
 %apply short *OUTPUT { short &x, short &y, short &z };
-
-%ignore SbVec3s::getValue() const;
